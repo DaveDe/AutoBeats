@@ -1,0 +1,12 @@
+REMAINING
+
+-custom music picker
+-background theme, play/pause/skip buttons, custom buttons, fix icon, featured graphic
+-spotify integration
+-test different devices
+
+BUGS
+
+-app crashes when seekbar is manually moved to last second of song
+-sometimes new song doesnt automatically play, unless you interact with device or mediabutton
+-when speakers are on, and you pause using ui, song will resume if you swipe to new fragment

@@ -1,0 +1,16 @@
+ALL FILES (used to communicate between service and ui)
+
+NOTE: All files initialized in onStartCommand() of service
+
+FILE NAME	OPTIONS				FUNCTION
+
+
+musicState.txt     : "pause", "play", "skip song" : service constantly checks state while playing, to know whether to play or pause music
+songduration.txt   : integer		  	: holds length of song in seconds, used to set max value of seekbar
+nextSong.txt	   : "none", song path		: holds path of next song, if selected, otherwise it holds "none"
+seekbar.txt	   : "start", integer, "-"	: holds values necessary in updating seekbar, start is assigned while seekbar is touched, - means seekbar isnt manually being moved
+currentSongUri.txt : path of current song, ""	: holds the path of the song currently playing	
+speaker-status.txt : "yes", "-", "no"		: tells service whether speaker box is checked or not. "-" means box is checked, and music already started
+options.txt	   : 0,1,2			: 0 is shuffle, 1 is playlist, 2 is disable. Cant be initialized in onStartCommand()
+playlist_names.txt : ArrayList<String> names	: holds names of all playlists
+(playlist name).txt: ArrayList<String> songs	: holds uri's of all songs in playlist
