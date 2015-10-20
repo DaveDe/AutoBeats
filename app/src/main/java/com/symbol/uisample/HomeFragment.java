@@ -9,6 +9,8 @@ import android.content.IntentFilter;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Point;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.media.MediaMetadataRetriever;
 import android.net.Uri;
 import android.os.Build;
@@ -25,6 +27,7 @@ import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.ListView;
+import android.widget.RelativeLayout;
 import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -35,7 +38,6 @@ import java.util.HashMap;
 
 public class HomeFragment extends Fragment {
 
-    private ImageView iv;
     private Bitmap b;
     private BroadcastReceiver songCompleteReceiver;
     private BroadcastReceiver seekBarReceiver;
@@ -70,6 +72,7 @@ public class HomeFragment extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        checkFirstRun();
         display = getActivity().getWindowManager().getDefaultDisplay();
         point = new Point();
         display.getSize(point);
@@ -105,7 +108,6 @@ public class HomeFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_main, container, false);
-        iv = (ImageView) view.findViewById(R.id.iv);
         sb = (SeekBar) view.findViewById(R.id.seekBar);
         nextSong = (Button) view.findViewById(R.id.nextSong);
         setMode = (Button) view.findViewById(R.id.setMode);
@@ -121,7 +123,12 @@ public class HomeFragment extends Fragment {
         b = BitmapFactory.decodeResource(getResources(), R.mipmap.unknown_album);
         Bitmap mb = StaticMethods.convertToMutable(b);
         Bitmap artwork = mb.createScaledBitmap(mb, width, height / 2, false);
-        iv.setImageBitmap(artwork);
+        //iv.setImageBitmap(artwork);
+        RelativeLayout relative = (RelativeLayout) getActivity().findViewById(R.id.relative);
+        Drawable dr = new BitmapDrawable(artwork);
+        if(relative != null){
+            relative.setBackgroundDrawable(dr);
+        }
 
         try{
             songDuration = Integer.parseInt(StaticMethods.readFirstLine("songduration.txt",getActivity().getBaseContext()));
@@ -392,7 +399,12 @@ public class HomeFragment extends Fragment {
             }
             Bitmap mb = StaticMethods.convertToMutable(b);
             Bitmap artwork = mb.createScaledBitmap(mb, width, height / 2, false);
-            iv.setImageBitmap(artwork);
+            //iv.setImageBitmap(artwork);
+            RelativeLayout relative = (RelativeLayout) getActivity().findViewById(R.id.relative);
+            Drawable dr = new BitmapDrawable(artwork);
+            if(relative != null){
+                relative.setBackgroundDrawable(dr);
+            }
             songInfoText.setText(songInfo);
         }
     }
@@ -418,4 +430,23 @@ public class HomeFragment extends Fragment {
             intent.putExtra(MESSAGE3, message);
         play_pause.sendBroadcast(intent);
     }
+
+    public void checkFirstRun() {
+        boolean isFirstRun = getActivity().getSharedPreferences("FIRSTRUN", Activity.MODE_PRIVATE).getBoolean("isFirstRun", true);
+        if (isFirstRun){
+            //add dialog here
+            final Dialog dialog = new Dialog(getActivity());
+            dialog.setContentView(R.layout.first_time_dialog);
+            dialog.setTitle("First Time Setup");
+
+            dialog.show();
+
+            getActivity().getSharedPreferences("FIRSTRUN", Activity.MODE_PRIVATE)
+                    .edit()
+                    .putBoolean("isFirstRun", false)
+                    .apply();
+        }
+
+    }
+
 }
