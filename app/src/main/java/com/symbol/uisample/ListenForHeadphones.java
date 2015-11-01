@@ -156,6 +156,7 @@ public class ListenForHeadphones extends Service {
             }
             //keep playing songs until headphones are unplugged
             while(true){
+
                 length = mp.getCurrentPosition();
                 if(!isRunning){
                     mp.pause();
@@ -187,10 +188,17 @@ public class ListenForHeadphones extends Service {
                 }
                 if(musicState.equals("pause") && mp.isPlaying()){
                     mp.pause();
-                    makeNotification(notificationTitle,notificationContent);
+                    makeNotification(notificationTitle, notificationContent);
                 }
                 if(musicState.equals("skip song")){
                     onComplete();
+                }
+                if(musicState.equals("prev song")){
+                    onComplete();
+                    /*String prevUri = "";
+                    try{
+                        prevUri = StaticMethods.readFirstLine("prevSongUri.txt", getBaseContext());
+                    }catch(IOException e){}*/
                 }
                 if(musicState.equals("play") && !mp.isPlaying() && (mp.getDuration() <= length + 500)) {//song finished (within 500 milliseconds)
                     onComplete();
@@ -264,26 +272,40 @@ public class ListenForHeadphones extends Service {
         }
     };
 
+    //rewrite this method
     private void playSong(){
+
+        String state = "";
+        try {
+            state = StaticMethods.readFirstLine("musicState.txt",getBaseContext());
+            String temp = StaticMethods.readFirstLine("currentSongUri.txt",getBaseContext());
+            StaticMethods.write("songLog.txt", temp, getBaseContext());
+        } catch (IOException e) {}
+
+        //make file that logs all songs played. Store 50 songs.
+        /*try {
+            String prevSong = StaticMethods.readFirstLine("currentSongUri.txt", getBaseContext());
+            if(prevSong != null && !prevSong.equals("")){
+                StaticMethods.write("prevSongUri.txt", prevSong, getBaseContext());
+            }
+        } catch (IOException e) {}*/
+
         int song = 0;
         String nextSong = getNextSong();
-        if(!nextSong.equals("none")){
-            notificationContent = StaticMethods.getTitleFromUriString(nextSong);
-            notificationTitle = StaticMethods.getArtistFromUriString(nextSong);
+        if(state.equals("prev song")){
+            String songUri = "";
             try{
-                mp.setDataSource(nextSong);
-                mp.prepare();
-                mp.start();
-                isRunning = true;
-                try {
-                    StaticMethods.write("currentSongUri.txt", nextSong, getBaseContext());
-                } catch (IOException e) {}
-                int songDuration = mp.getDuration();
-                try{
-                    StaticMethods.write("songduration.txt",Integer.toString(songDuration),getBaseContext());
-                }catch(IOException e){}
-                sendSongCompleteResult(notificationTitle+"\n"+notificationContent);
+                //make sure songUri isnt null or empty
+                songUri = StaticMethods.readFirstLine("prevSongUri.txt",getBaseContext());
+                if(songUri == null || songUri.equals("")){
+                    Toast.makeText(getBaseContext(),"Cant find previous song",Toast.LENGTH_LONG).show();
+                }else{
+                    playSongHelper(songUri);
+                }
             }catch(IOException e){}
+        }
+        if(!nextSong.equals("none")){
+            playSongHelper(nextSong);
         }else {
             try {
                 mode = Integer.parseInt(StaticMethods.readFirstLine("options.txt", getBaseContext()));
@@ -292,20 +314,8 @@ public class ListenForHeadphones extends Service {
                 if (mode == 0) {
                     Random rand = new Random();
                     song = rand.nextInt(songPaths.size());
-                    notificationContent = StaticMethods.getTitleFromUriString(songPaths.get(song));
-                    notificationTitle = StaticMethods.getArtistFromUriString(songPaths.get(song));
-                    mp.setDataSource(songPaths.get(song));
-                    mp.prepare();
-                    mp.start();
-                    isRunning = true;
-                    try {
-                        StaticMethods.write("currentSongUri.txt",songPaths.get(song),getBaseContext());
-                    } catch (IOException e) {}
-                    int songDuration = mp.getDuration();
-                    try{
-                        StaticMethods.write("songduration.txt",Integer.toString(songDuration),getBaseContext());
-                    }catch(IOException e){}
-                    sendSongCompleteResult(notificationTitle+"\n"+notificationContent);
+                    String songUri = songPaths.get(song);
+                    playSongHelper(songUri);
                 }
                 if (mode == 1) {
                     String file = StaticMethods.readFirstLine("setPlaylist.txt", getBaseContext());
@@ -317,29 +327,34 @@ public class ListenForHeadphones extends Service {
                         ArrayList<String> playListSongs = StaticMethods.readFile(file, getBaseContext());
                         Random rand = new Random();
                         song = rand.nextInt(playListSongs.size());
-                        notificationContent = StaticMethods.getTitleFromUriString(playListSongs.get(song));
-                        notificationTitle = StaticMethods.getArtistFromUriString(playListSongs.get(song));
-                        mp.setDataSource(playListSongs.get(song));
-                        mp.prepare();
-                        mp.start();
-                        isRunning = true;
-                        try {
-                            StaticMethods.write("currentSongUri.txt", playListSongs.get(song), getBaseContext());
-                        } catch (IOException e) {
-                        }
-                        int songDuration = mp.getDuration();
-                        try {
-                            StaticMethods.write("songduration.txt", Integer.toString(songDuration), getBaseContext());
-                        } catch (IOException e) {
-                        }
-                        sendSongCompleteResult(notificationTitle+"\n"+notificationContent);
+                        String songUri = playListSongs.get(song);
+                        playSongHelper(songUri);
                     }
                 }
-            } catch (IOException e) {
-            }
+            } catch (IOException e) {}
         }
+
         makeNotification(notificationTitle, notificationContent);
     }
+
+    private void playSongHelper(String songUri){
+        try{
+            if(songUri != null && !songUri.equals("")){
+                notificationContent = StaticMethods.getTitleFromUriString(songUri);
+                notificationTitle = StaticMethods.getArtistFromUriString(songUri);
+                mp.setDataSource(songUri);
+                mp.prepare();
+                mp.start();
+                isRunning = true;
+                StaticMethods.write("currentSongUri.txt", songUri, getBaseContext());
+                int songDuration = mp.getDuration();
+                StaticMethods.write("songduration.txt", Integer.toString(songDuration), getBaseContext());
+                sendSongCompleteResult(notificationTitle + "\n" + notificationContent);
+            }
+        }catch(IOException e){}
+
+    }
+
     private void onComplete(){
         mp.stop();
         mp.release();

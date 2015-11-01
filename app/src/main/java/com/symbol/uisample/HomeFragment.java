@@ -17,6 +17,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.content.LocalBroadcastManager;
+import android.support.v7.widget.Toolbar;
 import android.view.Display;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -26,6 +27,7 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.RelativeLayout;
 import android.widget.SeekBar;
@@ -44,14 +46,15 @@ public class HomeFragment extends Fragment {
     private Display display;
     private Point point;
     private SeekBar sb;
-    private Button nextSong;
+    private ImageButton nextSong;
     private Button setMode;
     private ImageButton playPause;
     private ImageButton skip;
+    private ImageButton prev;
     private TextView currentPoint;
     private TextView endPoint;
     private TextView songInfoText;
-    private TextView currentMode;
+    private RelativeLayout rl;
 
     private int width;
     private int height;
@@ -101,6 +104,7 @@ public class HomeFragment extends Fragment {
         };
 
         play_pause = LocalBroadcastManager.getInstance(getActivity().getBaseContext());
+
     }
 
     // Inflate the view for the fragment based on layout XML
@@ -109,21 +113,23 @@ public class HomeFragment extends Fragment {
                              Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_main, container, false);
         sb = (SeekBar) view.findViewById(R.id.seekBar);
-        nextSong = (Button) view.findViewById(R.id.nextSong);
+        nextSong = (ImageButton) view.findViewById(R.id.nextSong);
         setMode = (Button) view.findViewById(R.id.setMode);
         playPause = (ImageButton) view.findViewById(R.id.play_pause);
         skip = (ImageButton) view.findViewById(R.id.skip);
         currentPoint = (TextView) view.findViewById(R.id.currentPoint);
         endPoint = (TextView) view.findViewById(R.id.endPoint);
         songInfoText = (TextView) view.findViewById(R.id.song_info);
-        currentMode = (TextView) view.findViewById(R.id.currentMode);
+        rl = (RelativeLayout) view.findViewById(R.id.relative2);
+        prev = (ImageButton) view.findViewById(R.id.prev);
+
+        rl.getBackground().setAlpha(200);//out of 255(255 is opaque)
         //initialize playPause icon
         playPause.setImageResource(R.mipmap.play);
         //initialize art
         b = BitmapFactory.decodeResource(getResources(), R.mipmap.unknown_album);
         Bitmap mb = StaticMethods.convertToMutable(b);
         Bitmap artwork = mb.createScaledBitmap(mb, width, height / 2, false);
-        //iv.setImageBitmap(artwork);
         RelativeLayout relative = (RelativeLayout) getActivity().findViewById(R.id.relative);
         Drawable dr = new BitmapDrawable(artwork);
         if(relative != null){
@@ -192,6 +198,7 @@ public class HomeFragment extends Fragment {
                         StaticMethods.write("musicState.txt", "play", getActivity().getBaseContext());
                     } catch (IOException e) {
                     }
+                    playPause.setBackgroundResource(0);//clear imagebutton of previous image
                     playPause.setImageResource(R.mipmap.pause);
                     sendPlayPauseResult("play");//if headphones are not plugged in, play through speakers
                 }
@@ -207,11 +214,27 @@ public class HomeFragment extends Fragment {
                         playPause.setImageResource(R.mipmap.pause);
                     }
                     StaticMethods.write("musicState.txt", "skip song", getActivity().getBaseContext());
-                } catch (IOException e) {
-                }
+                } catch (IOException e) {}
 
             }
         });
+
+        prev.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View v) {
+
+                try {
+                    String state = StaticMethods.readFirstLine("musicState.txt",getActivity().getBaseContext());
+                    if(state.equals("pause")){
+                        playPause.setImageResource(R.mipmap.pause);
+                    }
+                    StaticMethods.write("musicState.txt", "prev song", getActivity().getBaseContext());
+                } catch (IOException e) {}
+
+            }
+
+        });
+
         setMode.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -233,13 +256,13 @@ public class HomeFragment extends Fragment {
                     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                         switch(position){
                             case 0:
-                                currentMode.setText("Shuffle");
+                                setMode.setText("Shuffle");
                                 break;
                             case 1:
-                                currentMode.setText("selected playlist name here");
+                                setMode.setText("Playlist");
                                 break;
                             case 2:
-                                currentMode.setText("Disabled");
+                                setMode.setText("Disabled");
                         }
                         try {
                             StaticMethods.write("options.txt", Integer.toString(position), getActivity().getBaseContext());
@@ -265,15 +288,22 @@ public class HomeFragment extends Fragment {
             switch(temp){
                 case 0:
                     mode = "Shuffle";
+                    setMode.setText(mode);
                     break;
                 case 1:
-                    mode = "Playlist";
+                    mode = StaticMethods.readFirstLine("setPlaylist.txt",getActivity().getBaseContext());
+                    if(mode == null){
+                        setMode.setText("Playlist");
+                    }else{
+                        mode = mode.substring(0, mode.length() - 4);//remove .txt from mode
+                        setMode.setText(mode);
+                    }
                     break;
                 case 2:
                     mode = "Disable";
+                    setMode.setText(mode);
                     break;
             }
-            currentMode.setText("Current Mode: "+mode);
         }catch(IOException e){}
     }
 
@@ -296,7 +326,7 @@ public class HomeFragment extends Fragment {
                 try{
                     StaticMethods.write("setPlaylist.txt",playlistFileName,getActivity().getBaseContext());
                 }catch(IOException e){}
-                currentMode.setText("Playlist: "+adapter.getItem(position).toString());
+                setMode.setText(adapter.getItem(position).toString());
                 dialog.dismiss();
             }
         });
