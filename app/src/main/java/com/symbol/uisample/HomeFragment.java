@@ -18,6 +18,7 @@ import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.Display;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -104,6 +105,7 @@ public class HomeFragment extends Fragment {
         };
 
         play_pause = LocalBroadcastManager.getInstance(getActivity().getBaseContext());
+
 
     }
 

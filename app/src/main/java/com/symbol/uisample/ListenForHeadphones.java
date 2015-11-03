@@ -16,6 +16,7 @@ import android.os.AsyncTask;
 import android.os.IBinder;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.NotificationCompat;
+import android.util.Log;
 import android.widget.ImageButton;
 import android.widget.RemoteViews;
 import android.widget.Toast;
@@ -48,7 +49,6 @@ public class ListenForHeadphones extends Service {
     static final public String MESSAGE1 = "SONG_FINISHED_MESSAGE";
     static final public String RESULT2 = "SEEKBAR_RESULT";
     static final public String MESSAGE2 = "SEEKBAR_MESSAGE";
-
 
     @Override
     public IBinder onBind(Intent arg0) {
@@ -195,10 +195,6 @@ public class ListenForHeadphones extends Service {
                 }
                 if(musicState.equals("prev song")){
                     onComplete();
-                    /*String prevUri = "";
-                    try{
-                        prevUri = StaticMethods.readFirstLine("prevSongUri.txt", getBaseContext());
-                    }catch(IOException e){}*/
                 }
                 if(musicState.equals("play") && !mp.isPlaying() && (mp.getDuration() <= length + 500)) {//song finished (within 500 milliseconds)
                     onComplete();
@@ -278,31 +274,30 @@ public class ListenForHeadphones extends Service {
         String state = "";
         try {
             state = StaticMethods.readFirstLine("musicState.txt",getBaseContext());
-            String temp = StaticMethods.readFirstLine("currentSongUri.txt",getBaseContext());
-            StaticMethods.write("songLog.txt", temp, getBaseContext());
         } catch (IOException e) {}
-
-        //make file that logs all songs played. Store 50 songs.
-        /*try {
-            String prevSong = StaticMethods.readFirstLine("currentSongUri.txt", getBaseContext());
-            if(prevSong != null && !prevSong.equals("")){
-                StaticMethods.write("prevSongUri.txt", prevSong, getBaseContext());
-            }
-        } catch (IOException e) {}*/
 
         int song = 0;
         String nextSong = getNextSong();
         if(state.equals("prev song")){
             String songUri = "";
             try{
-                //make sure songUri isnt null or empty
-                songUri = StaticMethods.readFirstLine("prevSongUri.txt",getBaseContext());
+                songUri = StaticMethods.readFirstLine("songLog.txt",getBaseContext());
+
                 if(songUri == null || songUri.equals("")){
-                    Toast.makeText(getBaseContext(),"Cant find previous song",Toast.LENGTH_LONG).show();
                 }else{
                     playSongHelper(songUri);
                 }
+                //remove songUri from songLog.txt
+                ArrayList<String> songs = StaticMethods.readFile("songLog.txt",getBaseContext());
+                StringBuilder sb = new StringBuilder();
+                //skip first song (list decreases in size by 1)
+                for(int i = 1; i < songs.size(); i++){
+                    sb.append(songs.get(i) + "\n");
+                }
+                StaticMethods.write("songLog.txt", sb.toString(), getBaseContext());
+
             }catch(IOException e){}
+            return;
         }
         if(!nextSong.equals("none")){
             playSongHelper(nextSong);
@@ -335,6 +330,23 @@ public class ListenForHeadphones extends Service {
         }
 
         makeNotification(notificationTitle, notificationContent);
+
+        try {
+            String temp = StaticMethods.readFirstLine("currentSongUri.txt",getBaseContext());
+            ArrayList<String> songs = StaticMethods.readFile("songLog.txt", getBaseContext());
+            if(temp != null && !temp.equals("")){
+                songs.add(temp);
+
+                StringBuilder sb = new StringBuilder();
+                //most recent songs should be on top of list
+                for(int i = songs.size()-1; i >= 0; i--){
+                    sb.append(songs.get(i)+"\n");
+                }
+                //make file that logs all songs played.
+                StaticMethods.write("songLog.txt", sb.toString(), getBaseContext());
+            }
+
+        } catch (IOException e) {}
     }
 
     private void playSongHelper(String songUri){
@@ -342,6 +354,7 @@ public class ListenForHeadphones extends Service {
             if(songUri != null && !songUri.equals("")){
                 notificationContent = StaticMethods.getTitleFromUriString(songUri);
                 notificationTitle = StaticMethods.getArtistFromUriString(songUri);
+                System.out.println("SONg URI: "+songUri);
                 mp.setDataSource(songUri);
                 mp.prepare();
                 mp.start();
