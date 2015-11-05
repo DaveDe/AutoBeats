@@ -194,7 +194,7 @@ public class ListenForHeadphones extends Service {
                     onComplete();
                 }
                 if(musicState.equals("prev song")){
-                    onComplete();
+                    prevOnComplete();
                 }
                 if(musicState.equals("play") && !mp.isPlaying() && (mp.getDuration() <= length + 500)) {//song finished (within 500 milliseconds)
                     onComplete();
@@ -331,22 +331,6 @@ public class ListenForHeadphones extends Service {
 
         makeNotification(notificationTitle, notificationContent);
 
-        try {
-            String temp = StaticMethods.readFirstLine("currentSongUri.txt",getBaseContext());
-            ArrayList<String> songs = StaticMethods.readFile("songLog.txt", getBaseContext());
-            if(temp != null && !temp.equals("")){
-                songs.add(temp);
-
-                StringBuilder sb = new StringBuilder();
-                //most recent songs should be on top of list
-                for(int i = songs.size()-1; i >= 0; i--){
-                    sb.append(songs.get(i)+"\n");
-                }
-                //make file that logs all songs played.
-                StaticMethods.write("songLog.txt", sb.toString(), getBaseContext());
-            }
-
-        } catch (IOException e) {}
     }
 
     private void playSongHelper(String songUri){
@@ -354,7 +338,6 @@ public class ListenForHeadphones extends Service {
             if(songUri != null && !songUri.equals("")){
                 notificationContent = StaticMethods.getTitleFromUriString(songUri);
                 notificationTitle = StaticMethods.getArtistFromUriString(songUri);
-                System.out.println("SONg URI: "+songUri);
                 mp.setDataSource(songUri);
                 mp.prepare();
                 mp.start();
@@ -369,6 +352,33 @@ public class ListenForHeadphones extends Service {
     }
 
     private void onComplete(){
+        //save song in songLog for previous button to work
+        try {
+            String temp = StaticMethods.readFirstLine("currentSongUri.txt",getBaseContext());
+            ArrayList<String> songs = StaticMethods.readFile("songLog.txt", getBaseContext());
+            if(temp != null && !temp.equals("")){
+
+                StringBuilder sb = new StringBuilder();
+                sb.append(temp + "\n");
+                //most recent songs should be on top of list
+                for(int i = 0; i < songs.size(); i++){
+                    sb.append(songs.get(i)+"\n");
+                }
+                //make file that logs all songs played.
+                StaticMethods.write("songLog.txt", sb.toString(), getBaseContext());
+            }
+
+        } catch (IOException e) {}
+        mp.stop();
+        mp.release();
+        mp = new MediaPlayer();
+        playSong();
+        try{
+            StaticMethods.write("musicState.txt", "play", getBaseContext());//used for skip function
+        }catch(IOException e){}
+    }
+
+    private void prevOnComplete(){
         mp.stop();
         mp.release();
         mp = new MediaPlayer();

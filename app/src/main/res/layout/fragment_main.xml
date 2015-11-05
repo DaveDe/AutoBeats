@@ -80,6 +80,14 @@
             android:id="@+id/nextSong"
             android:layout_alignBottom="@+id/play_pause" />
 
+        <Spinner
+            android:id="@+id/spinner"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentTop="true"
+            android:layout_alignLeft="@+id/skip"
+            android:layout_alignStart="@+id/skip" />
+
         <Button
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"

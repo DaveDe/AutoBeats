@@ -32,6 +32,7 @@ import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.RelativeLayout;
 import android.widget.SeekBar;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -48,7 +49,7 @@ public class HomeFragment extends Fragment {
     private Point point;
     private SeekBar sb;
     private ImageButton nextSong;
-    private Button setMode;
+    //private Button setMode;
     private ImageButton playPause;
     private ImageButton skip;
     private ImageButton prev;
@@ -56,6 +57,7 @@ public class HomeFragment extends Fragment {
     private TextView endPoint;
     private TextView songInfoText;
     private RelativeLayout rl;
+    private Spinner spinner;
 
     private int width;
     private int height;
@@ -116,7 +118,7 @@ public class HomeFragment extends Fragment {
         View view = inflater.inflate(R.layout.fragment_main, container, false);
         sb = (SeekBar) view.findViewById(R.id.seekBar);
         nextSong = (ImageButton) view.findViewById(R.id.nextSong);
-        setMode = (Button) view.findViewById(R.id.setMode);
+        //setMode = (Button) view.findViewById(R.id.setMode);
         playPause = (ImageButton) view.findViewById(R.id.play_pause);
         skip = (ImageButton) view.findViewById(R.id.skip);
         currentPoint = (TextView) view.findViewById(R.id.currentPoint);
@@ -124,6 +126,7 @@ public class HomeFragment extends Fragment {
         songInfoText = (TextView) view.findViewById(R.id.song_info);
         rl = (RelativeLayout) view.findViewById(R.id.relative2);
         prev = (ImageButton) view.findViewById(R.id.prev);
+        spinner = (Spinner)view.findViewById(R.id.spinner);
 
         rl.getBackground().setAlpha(200);//out of 255(255 is opaque)
         //initialize playPause icon
@@ -172,6 +175,32 @@ public class HomeFragment extends Fragment {
         });
 
         changeArtwork();
+
+        String[] paths = {"Shuffle", "Playlist", "Disable"};
+
+        ArrayAdapter<String> adapter = new ArrayAdapter<String>(getActivity(),
+                android.R.layout.simple_spinner_item,paths);
+
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinner.setAdapter(adapter);
+        spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                //Toast.makeText(getActivity().getBaseContext(),"Item " + position + " selected", Toast.LENGTH_LONG).show();
+                try {
+                    StaticMethods.write("options.txt", Integer.toString(position), getActivity().getBaseContext());
+                } catch (IOException e) {
+                }
+                if(position == 1){
+                    createPlaylistDialog();
+                }
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+                Toast.makeText(getActivity().getBaseContext(),"Nothing Selected", Toast.LENGTH_LONG).show();
+            }
+        });
 
         nextSong.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -237,7 +266,7 @@ public class HomeFragment extends Fragment {
 
         });
 
-        setMode.setOnClickListener(new View.OnClickListener() {
+        /*setMode.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 final Dialog dialog = new Dialog(getActivity());
@@ -278,35 +307,8 @@ public class HomeFragment extends Fragment {
                 });
                 dialog.show();
             }
-        });
-        displayMode();
+        });*/
         return view;
-    }
-
-    private void displayMode(){
-         try{
-            String mode = StaticMethods.readFirstLine("options.txt",getActivity().getBaseContext());
-            int temp = Integer.parseInt(mode);
-            switch(temp){
-                case 0:
-                    mode = "Shuffle";
-                    setMode.setText(mode);
-                    break;
-                case 1:
-                    mode = StaticMethods.readFirstLine("setPlaylist.txt",getActivity().getBaseContext());
-                    if(mode == null){
-                        setMode.setText("Playlist");
-                    }else{
-                        mode = mode.substring(0, mode.length() - 4);//remove .txt from mode
-                        setMode.setText(mode);
-                    }
-                    break;
-                case 2:
-                    mode = "Disable";
-                    setMode.setText(mode);
-                    break;
-            }
-        }catch(IOException e){}
     }
 
     private void createPlaylistDialog(){
@@ -328,7 +330,7 @@ public class HomeFragment extends Fragment {
                 try{
                     StaticMethods.write("setPlaylist.txt",playlistFileName,getActivity().getBaseContext());
                 }catch(IOException e){}
-                setMode.setText(adapter.getItem(position).toString());
+                //setMode.setText(adapter.getItem(position).toString());
                 dialog.dismiss();
             }
         });
