@@ -15,22 +15,29 @@ public class HeadphoneButtonListener extends BroadcastReceiver {
     private long DOUBLE_CLICK_DELAY = 450;
     private boolean doubleClick = false;
 
+    private SharedPreferences settings;
+    private SharedPreferences.Editor editor;
+
     @Override
     public void onReceive(final Context context, Intent intent) {
+
+        settings = context.getSharedPreferences(ListenForHeadphones.PREFS_NAME, 0);
+        editor = settings.edit();
+
         if (Intent.ACTION_MEDIA_BUTTON.equals(intent.getAction())) {
             KeyEvent event = (KeyEvent)intent.getParcelableExtra(Intent.EXTRA_KEY_EVENT);
 
             if (((event.getKeyCode() == KeyEvent.KEYCODE_HEADSETHOOK) ||
                     (event.getKeyCode() == KeyEvent.KEYCODE_MEDIA_PAUSE)||
                     (event.getKeyCode() == KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE))&& (event.getAction() == KeyEvent.ACTION_DOWN)) {
-                SharedPreferences settings = context.getSharedPreferences("name", 0);
+                //SharedPreferences settings = context.getSharedPreferences("name", 0);
                 long last = settings.getLong("last", 0);
                 long delta = System.currentTimeMillis() - last;
                 if (delta < DOUBLE_CLICK_DELAY) {
                     doubleClick = true;
-                    doubleClick(context);
+                    doubleClick();
                 }
-                SharedPreferences.Editor editor = settings.edit();
+                //SharedPreferences.Editor editor = settings.edit();
                 editor.putLong("last", System.currentTimeMillis());
                 editor.commit();
 
@@ -38,32 +45,25 @@ public class HeadphoneButtonListener extends BroadcastReceiver {
                 //for the purposes of this application, it doesnt matter, as double click will change song
                 //and make sure state.equals("play")
                 if(!doubleClick){
-                    singleClick(context);
+                    singleClick();
                 }
                 doubleClick = false;
             }
         }
-        //abortBroadcast();
     }
 
-    public void singleClick(Context context){
-        try{
-            state = StaticMethods.readFirstLine("musicState.txt",context);
-        }catch(IOException e){}
+    public void singleClick(){
+        state = settings.getString("musicState","");
         if(state.equals("play")){
-            try{
-                StaticMethods.write("musicState.txt","pause",context);
-            }catch(IOException e){}
+            editor.putString("musicState","pause");
         }else if(state.equals("pause")){
-            try{
-                StaticMethods.write("musicState.txt","play",context);
-            }catch(IOException e){}
+            editor.putString("musicState","play");
         }
+        editor.commit();
     }
 
-    public void doubleClick(Context context){
-        try{
-            StaticMethods.write("musicState.txt","skip song",context);
-        }catch(IOException e){}
+    public void doubleClick(){
+        editor.putString("musicState","skip song");
+        editor.commit();
     }
 }

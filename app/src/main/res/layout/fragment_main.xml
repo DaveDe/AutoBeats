@@ -59,7 +59,6 @@
             android:layout_height="wrap_content"
             android:background="@mipmap/skip"
             android:id="@+id/skip"
-            android:layout_above="@+id/setMode"
             android:layout_alignRight="@+id/endPoint"
             android:layout_alignEnd="@+id/endPoint" />
 
@@ -68,7 +67,6 @@
             android:layout_height="wrap_content"
             android:background="@mipmap/prev"
             android:id="@+id/prev"
-            android:layout_above="@+id/setMode"
             android:layout_toRightOf="@+id/currentPoint"
             android:layout_toEndOf="@+id/currentPoint" />
 
@@ -87,14 +85,6 @@
             android:layout_alignParentTop="true"
             android:layout_alignLeft="@+id/skip"
             android:layout_alignStart="@+id/skip" />
-
-        <Button
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Set Mode"
-            android:id="@+id/setMode"
-            android:layout_below="@+id/nextSong"
-            android:layout_centerHorizontal="true" />
 
     </RelativeLayout>
 

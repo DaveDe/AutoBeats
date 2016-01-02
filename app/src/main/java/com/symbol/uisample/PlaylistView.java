@@ -2,6 +2,7 @@ package com.symbol.uisample;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
@@ -29,11 +30,18 @@ public class PlaylistView extends Activity{
     private String playlistFileName = "";
     private int playlistPosition;
 
+    private SharedPreferences settings;
+    private SharedPreferences.Editor editor;
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
 
         super.onCreate(savedInstanceState);
         setContentView(R.layout.playlist_layout);
+
+        settings = getBaseContext().getSharedPreferences(ListenForHeadphones.PREFS_NAME, 0);
+        editor = settings.edit();
+
         Intent i = getIntent();
         playlistPosition = i.getIntExtra("playlist-index", 0);
         ArrayList<String> temp = StaticMethods.readFile("playlist_names.txt",getBaseContext());
@@ -66,9 +74,10 @@ public class PlaylistView extends Activity{
                     }
                     StaticMethods.write("playlist_names.txt", sbPlaylist.toString(), getBaseContext());
                     //if deleting current playlist, switch mode to shuffle
-                    String currentPlaylistFileName = StaticMethods.readFirstLine("setPlaylist.txt",getBaseContext());
+                    String currentPlaylistFileName = settings.getString("setPlaylist","");
                     if(playlistFileName.equals(currentPlaylistFileName)){
-                        StaticMethods.write("options.txt","0",getBaseContext());
+                        editor.putInt("options",0);
+                        editor.commit();
                         Toast.makeText(getBaseContext(),"Shuffle mode is set", Toast.LENGTH_LONG).show();
                     }
                 } catch (IOException e) {

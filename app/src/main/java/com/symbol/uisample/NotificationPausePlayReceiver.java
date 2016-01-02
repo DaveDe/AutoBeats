@@ -3,6 +3,7 @@ package com.symbol.uisample;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 
 import java.io.IOException;
 
@@ -10,19 +11,21 @@ public class NotificationPausePlayReceiver extends BroadcastReceiver {
 
     private String musicState = "";
 
+    private SharedPreferences settings;
+    private SharedPreferences.Editor editor;
+
     @Override
     public void onReceive(Context context, Intent intent) {
-        try{
-            musicState = StaticMethods.readFirstLine("musicState.txt",context);
-        }catch(IOException e){}
+
+        settings = context.getSharedPreferences(ListenForHeadphones.PREFS_NAME, 0);
+        editor = settings.edit();
+
+        musicState = settings.getString("musicState","");
         if(musicState.equals("play")){
-            try{
-                StaticMethods.write("musicState.txt","pause",context);
-            }catch(IOException e){}
+            editor.putString("musicState","pause");
         }else if(musicState.equals("pause")){
-            try{
-                StaticMethods.write("musicState.txt","play",context);
-            }catch(IOException e){}
+            editor.putString("musicState","play");
         }
+        editor.commit();
     }
 }

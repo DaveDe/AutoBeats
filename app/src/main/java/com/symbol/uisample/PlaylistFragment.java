@@ -2,6 +2,7 @@ package com.symbol.uisample;
 
 import android.app.Dialog;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
@@ -32,6 +33,9 @@ public class PlaylistFragment extends Fragment{
     private ArrayList<String> playlistNames;
     private StringBuilder sb;
 
+    private SharedPreferences settings;
+    private SharedPreferences.Editor editor;
+
     public static PlaylistFragment newInstance(int page, String title) {
         PlaylistFragment fragmentFirst = new PlaylistFragment();
         return fragmentFirst;
@@ -40,6 +44,8 @@ public class PlaylistFragment extends Fragment{
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        settings = getActivity().getSharedPreferences(ListenForHeadphones.PREFS_NAME, 0);
+        editor = settings.edit();
     }
 
     @Override
@@ -54,13 +60,12 @@ public class PlaylistFragment extends Fragment{
         sb = new StringBuilder();
 
         //import google play playlists, only after starting from destroyed activity
-        try{
-            String importStatus = StaticMethods.readFirstLine("import_status.txt",getActivity().getBaseContext());
-            if(!importStatus.equals("imported")){
-                findDevicePlaylists();
-                StaticMethods.write("import_status.txt", "imported", getActivity().getBaseContext());
-            }
-        }catch(IOException e){}
+        String importStatus = settings.getString("importStatus","");
+        if(!importStatus.equals("imported")){
+            findDevicePlaylists();
+            editor.putString("importStatus","imported");
+            editor.commit();
+        }
 
         playlistNames = StaticMethods.readFile("playlist_names.txt",getActivity().getBaseContext());
 

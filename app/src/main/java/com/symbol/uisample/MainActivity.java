@@ -3,6 +3,8 @@ package com.symbol.uisample;
 import java.io.IOException;
 import java.util.Locale;
 
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.support.v4.app.FragmentActivity;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.app.ActionBar;
@@ -23,10 +25,16 @@ import android.widget.TextView;
 public class MainActivity extends FragmentActivity {
 
     FragmentPagerAdapter adapterViewPager;
+    private SharedPreferences settings;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        settings = getSharedPreferences(ListenForHeadphones.PREFS_NAME, 0);
+        boolean serviceStarted = settings.getBoolean("serviceStarted4",false);
+        if(!serviceStarted){
+            this.startService(new Intent(this, ListenForHeadphones.class));
+        }
         setContentView(R.layout.activity_main);
         ViewPager vpPager = (ViewPager) findViewById(R.id.vpPager);
         adapterViewPager = new MyPagerAdapter(getSupportFragmentManager());

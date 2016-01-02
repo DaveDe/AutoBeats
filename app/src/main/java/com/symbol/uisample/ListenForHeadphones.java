@@ -10,6 +10,7 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.os.AsyncTask;
@@ -27,7 +28,14 @@ import java.util.Random;
 
 public class ListenForHeadphones extends Service {
 
+    static final public String RESULT1 = "SONG_FINISHED_RESULT";
+    static final public String MESSAGE1 = "SONG_FINISHED_MESSAGE";
+    static final public String RESULT2 = "SEEKBAR_RESULT";
+    static final public String MESSAGE2 = "SEEKBAR_MESSAGE";
+    public static final String PREFS_NAME = "Info";
+
     private boolean isRunning = false;
+    private boolean resume = false;
     private MediaPlayer mp = new MediaPlayer();
     private int length = 0;
     private String musicState = "";
@@ -38,17 +46,12 @@ public class ListenForHeadphones extends Service {
     private boolean headphones = false;
     private String seekBarProgress;
     private long elapsedTime;
-    private boolean resume = false;
 
-    LocalBroadcastManager songFinished;
-    LocalBroadcastManager seekBarUpdate;
-
-    BroadcastReceiver playPauseReceiver;
-
-    static final public String RESULT1 = "SONG_FINISHED_RESULT";
-    static final public String MESSAGE1 = "SONG_FINISHED_MESSAGE";
-    static final public String RESULT2 = "SEEKBAR_RESULT";
-    static final public String MESSAGE2 = "SEEKBAR_MESSAGE";
+    private LocalBroadcastManager songFinished;
+    private LocalBroadcastManager seekBarUpdate;
+    private BroadcastReceiver playPauseReceiver;
+    private SharedPreferences settings;
+    private SharedPreferences.Editor editor;
 
     @Override
     public IBinder onBind(Intent arg0) {
@@ -56,26 +59,8 @@ public class ListenForHeadphones extends Service {
     }
 
     @Override
-    public int onStartCommand(Intent intent, int flags, int startId) {
-        Toast.makeText(this, "AutoBeats Initialized", Toast.LENGTH_LONG).show();
-        NotificationManager notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-        notificationManager.cancelAll();
-        LocalBroadcastManager.getInstance(this).registerReceiver((playPauseReceiver), new IntentFilter(HomeFragment.RESULT3));
-        try{//initialize files
-            StaticMethods.write("musicState.txt", "pause", getBaseContext());
-            StaticMethods.write("nextSong.txt", "none", getBaseContext());
-            StaticMethods.write("seekbar.txt","-",getBaseContext());
-            StaticMethods.write("songduration.txt","10",getBaseContext());
-            StaticMethods.write("currentSongUri.txt","",getBaseContext());
-            StaticMethods.write("speaker-status.txt","no",getBaseContext());
-            StaticMethods.write("import_status.txt", "no", getBaseContext());
-        }catch(IOException e){}
-        songPaths = StaticMethods.getSongPath(getBaseContext());
-
-        return START_STICKY;
-    }
-    @Override
     public void onCreate() {
+
         IntentFilter filter = new IntentFilter(Intent.ACTION_HEADSET_PLUG);
         IntentFilter bfilter1 = new IntentFilter(BluetoothDevice.ACTION_ACL_CONNECTED);
         IntentFilter bfilter2 = new IntentFilter(BluetoothDevice.ACTION_ACL_DISCONNECT_REQUESTED);
@@ -106,6 +91,30 @@ public class ListenForHeadphones extends Service {
                 }
             }
         };
+
+    }
+
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        Toast.makeText(this, "AutoBeats Initialized", Toast.LENGTH_LONG).show();
+        settings = getSharedPreferences(PREFS_NAME, 0);
+        editor = settings.edit();
+
+        editor.putBoolean("serviceStarted4", true);
+        editor.putString("musicState", "pause");
+        editor.putString("nextSong","none");
+        editor.putString("seekbar", "-");
+        editor.putString("songDuration", "10");
+        editor.putString("currentSongUri", "");
+        editor.putString("speakerStatus", "no");
+        editor.putString("importStatus","no");
+        editor.commit();
+        NotificationManager notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+        notificationManager.cancelAll();
+        LocalBroadcastManager.getInstance(this).registerReceiver((playPauseReceiver), new IntentFilter(HomeFragment.RESULT3));
+        songPaths = StaticMethods.getSongPath(getBaseContext());
+
+        return START_STICKY;
     }
 
     private final BroadcastReceiver receiver = new BroadcastReceiver() {
@@ -136,12 +145,11 @@ public class ListenForHeadphones extends Service {
     };
 
     private void startMusic(){
-        try{
-            StaticMethods.write("musicState.txt", "play", getBaseContext());//always plays when headphones are plugged in
-        }catch(IOException e){}
-        try{
-            mode = Integer.parseInt(StaticMethods.readFirstLine("options.txt",getBaseContext()));
-        }catch(IOException e){}
+
+        editor.putString("musicState","play");
+        editor.commit();
+        mode = settings.getInt("options",0);
+
         if(mode != 2){
             isRunning = true;
             if(resume){
@@ -163,29 +171,17 @@ public class ListenForHeadphones extends Service {
                     length = mp.getCurrentPosition();
                     break;
                 }
-                try{
-                    seekBarProgress = StaticMethods.readFirstLine("seekbar.txt",getBaseContext());
-                }catch(IOException e){}
-                if(seekBarProgress == null){
-                    seekBarProgress = "-";
-                }
+                seekBarProgress = settings.getString("seekbar","-");
                 if(!seekBarProgress.equals("-")){
                     if(!seekBarProgress.equals("start")){
                         int jumpTo = Integer.parseInt(seekBarProgress);
                         mp.seekTo(jumpTo);
-                        try{
-                            StaticMethods.write("seekbar.txt","-",getBaseContext());
-                        }catch(IOException e){}
+                        editor.putString("seekbar","-");
                     }
                 }else{
                     sendSeekbarUpdate(Integer.toString(length));
                 }
-                try{
-                    musicState = StaticMethods.readFirstLine("musicState.txt",getBaseContext());
-                }catch(IOException e){}
-                if(musicState == null){
-                    musicState = "";
-                }
+                musicState = settings.getString("musicState","");
                 if(musicState.equals("pause") && mp.isPlaying()){
                     mp.pause();
                     makeNotification(notificationTitle, notificationContent);
@@ -204,20 +200,19 @@ public class ListenForHeadphones extends Service {
                     mp.start();
                     makeNotification(notificationTitle,notificationContent);
                 }
-                try{
-                    mode = Integer.parseInt(StaticMethods.readFirstLine("options.txt",getBaseContext()));
-                }catch(IOException e){}
+                mode = settings.getInt("options",0);
                 if(mode == 2){
                     isRunning = false;
                 }
+                editor.commit();
             }
         }
     }
 
     private void stopMusic(){
-        try{
-            StaticMethods.write("musicState.txt","pause",getBaseContext());
-        }catch(IOException e){}
+
+        editor.putString("musicState","pause");
+        editor.commit();
         isRunning = false;
         NotificationManager notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
         notificationManager.cancelAll();
@@ -268,14 +263,9 @@ public class ListenForHeadphones extends Service {
         }
     };
 
-    //rewrite this method
     private void playSong(){
 
-        String state = "";
-        try {
-            state = StaticMethods.readFirstLine("musicState.txt",getBaseContext());
-        } catch (IOException e) {}
-
+        String state = settings.getString("musicState","pause");
         int song = 0;
         String nextSong = getNextSong();
         if(state.equals("prev song")){
@@ -302,31 +292,27 @@ public class ListenForHeadphones extends Service {
         if(!nextSong.equals("none")){
             playSongHelper(nextSong);
         }else {
-            try {
-                mode = Integer.parseInt(StaticMethods.readFirstLine("options.txt", getBaseContext()));
-            } catch (IOException e) {}
-            try {
-                if (mode == 0) {
+            mode = settings.getInt("options",0);
+            if (mode == 0) {
+                Random rand = new Random();
+                song = rand.nextInt(songPaths.size());
+                String songUri = songPaths.get(song);
+                playSongHelper(songUri);
+            }
+            if (mode == 1) {
+                String file = settings.getString("setPlaylist","");
+                if(file.equals("")){
+                    Toast.makeText(getBaseContext(),"Please set Playlist",Toast.LENGTH_LONG).show();//POSSIBLE BUG IF PLAYLIST IS NOT SET
+                    mp = new MediaPlayer();
+                    isRunning = false;
+                }else {
+                    ArrayList<String> playListSongs = StaticMethods.readFile(file, getBaseContext());
                     Random rand = new Random();
-                    song = rand.nextInt(songPaths.size());
-                    String songUri = songPaths.get(song);
+                    song = rand.nextInt(playListSongs.size());
+                    String songUri = playListSongs.get(song);
                     playSongHelper(songUri);
                 }
-                if (mode == 1) {
-                    String file = StaticMethods.readFirstLine("setPlaylist.txt", getBaseContext());
-                    if(file == null || file.equals("")){
-                        Toast.makeText(getBaseContext(),"Please set Playlist",Toast.LENGTH_LONG).show();//POSSIBLE BUG IF PLAYLIST IS NOT SET
-                        mp = new MediaPlayer();
-                        isRunning = false;
-                    }else {
-                        ArrayList<String> playListSongs = StaticMethods.readFile(file, getBaseContext());
-                        Random rand = new Random();
-                        song = rand.nextInt(playListSongs.size());
-                        String songUri = playListSongs.get(song);
-                        playSongHelper(songUri);
-                    }
-                }
-            } catch (IOException e) {}
+            }
         }
 
         makeNotification(notificationTitle, notificationContent);
@@ -342,9 +328,10 @@ public class ListenForHeadphones extends Service {
                 mp.prepare();
                 mp.start();
                 isRunning = true;
-                StaticMethods.write("currentSongUri.txt", songUri, getBaseContext());
+                editor.putString("currentSongUri", songUri);
                 int songDuration = mp.getDuration();
-                StaticMethods.write("songduration.txt", Integer.toString(songDuration), getBaseContext());
+                editor.putString("songDuration",Integer.toString(songDuration));
+                editor.commit();
                 sendSongCompleteResult(notificationTitle + "\n" + notificationContent);
             }
         }catch(IOException e){}
@@ -354,9 +341,9 @@ public class ListenForHeadphones extends Service {
     private void onComplete(){
         //save song in songLog for previous button to work
         try {
-            String temp = StaticMethods.readFirstLine("currentSongUri.txt",getBaseContext());
+            String temp = settings.getString("currentSongUri","");
             ArrayList<String> songs = StaticMethods.readFile("songLog.txt", getBaseContext());
-            if(temp != null && !temp.equals("")){
+            if(!temp.equals("")){
 
                 StringBuilder sb = new StringBuilder();
                 sb.append(temp + "\n");
@@ -373,9 +360,8 @@ public class ListenForHeadphones extends Service {
         mp.release();
         mp = new MediaPlayer();
         playSong();
-        try{
-            StaticMethods.write("musicState.txt", "play", getBaseContext());//used for skip function
-        }catch(IOException e){}
+        editor.putString("musicState","play");
+        editor.commit();
     }
 
     private void prevOnComplete(){
@@ -383,9 +369,8 @@ public class ListenForHeadphones extends Service {
         mp.release();
         mp = new MediaPlayer();
         playSong();
-        try{
-            StaticMethods.write("musicState.txt", "play", getBaseContext());//used for skip function
-        }catch(IOException e){}
+        editor.putString("musicState","play");
+        editor.commit();
     }
 
     private void makeNotification(String artist, String title){
@@ -404,10 +389,7 @@ public class ListenForHeadphones extends Service {
         contentView.setTextViewText(R.id.title, artist);
         contentView.setTextViewText(R.id.text, title);
         contentView.setOnClickPendingIntent(R.id.play_pause, playPauseIntent);
-        String temp = "";
-        try{
-            temp = StaticMethods.readFirstLine("musicState.txt",getBaseContext());
-        }catch(IOException e){}
+        String temp = settings.getString("musicState","");
         if(temp.equals("pause")){
             contentView.setImageViewResource(R.id.play_pause,R.mipmap.play);
         }else{
@@ -430,15 +412,9 @@ public class ListenForHeadphones extends Service {
     }
 
     private String getNextSong(){
-        String nextSong = "";
-        String temp = "";
-        try{
-            temp = StaticMethods.readFirstLine("nextSong.txt",getBaseContext());
-        }catch(IOException e){}
-        nextSong = temp;
-        try{
-            StaticMethods.write("nextSong.txt", "none", getBaseContext());
-        }catch(IOException e){}
+        String nextSong = settings.getString("nextSong","");
+        editor.putString("nextSong","none");
+        editor.commit();
         return nextSong;
     }
 
@@ -462,6 +438,9 @@ public class ListenForHeadphones extends Service {
         LocalBroadcastManager.getInstance(this).unregisterReceiver(playPauseReceiver);
         NotificationManager notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
         notificationManager.cancelAll();
+        editor.putBoolean("serviceStarted4", false);
+        editor.commit();
+        System.out.println("ONDESTROY");
     }
 
 }

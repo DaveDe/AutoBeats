@@ -6,6 +6,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Point;
@@ -42,6 +43,9 @@ import java.util.HashMap;
 
 public class HomeFragment extends Fragment {
 
+    static final public String RESULT3 = "PLAY_PAUSE_RESULT";
+    static final public String MESSAGE3 = "PLAY_PAUSE_MESSAGE";
+
     private Bitmap b;
     private BroadcastReceiver songCompleteReceiver;
     private BroadcastReceiver seekBarReceiver;
@@ -49,7 +53,6 @@ public class HomeFragment extends Fragment {
     private Point point;
     private SeekBar sb;
     private ImageButton nextSong;
-    //private Button setMode;
     private ImageButton playPause;
     private ImageButton skip;
     private ImageButton prev;
@@ -64,10 +67,9 @@ public class HomeFragment extends Fragment {
     private int songDuration = 0;
     private String songInfo = "not found";
 
-    LocalBroadcastManager play_pause;
-
-    static final public String RESULT3 = "PLAY_PAUSE_RESULT";
-    static final public String MESSAGE3 = "PLAY_PAUSE_MESSAGE";
+    private LocalBroadcastManager play_pause;
+    private SharedPreferences settings;
+    private SharedPreferences.Editor editor;
 
     // newInstance constructor for creating fragment with arguments
     public static HomeFragment newInstance(int page, String title) {
@@ -78,7 +80,10 @@ public class HomeFragment extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        checkFirstRun();
+
+        settings = getActivity().getSharedPreferences(ListenForHeadphones.PREFS_NAME, 0);
+        editor = settings.edit();
+
         display = getActivity().getWindowManager().getDefaultDisplay();
         point = new Point();
         display.getSize(point);
@@ -89,9 +94,7 @@ public class HomeFragment extends Fragment {
             public void onReceive(Context context, Intent intent) {
                 songInfo = intent.getStringExtra(ListenForHeadphones.MESSAGE1);
                 changeArtwork();
-                try{
-                    songDuration = Integer.parseInt(StaticMethods.readFirstLine("songduration.txt",getActivity().getBaseContext()));
-                }catch(IOException e){}
+                songDuration = Integer.parseInt(settings.getString("songDuration","10"));
                 sb.setMax(songDuration);
                 String endString = millisecondsToTimeFormat(songDuration);
                 endPoint.setText(endString);
@@ -118,7 +121,6 @@ public class HomeFragment extends Fragment {
         View view = inflater.inflate(R.layout.fragment_main, container, false);
         sb = (SeekBar) view.findViewById(R.id.seekBar);
         nextSong = (ImageButton) view.findViewById(R.id.nextSong);
-        //setMode = (Button) view.findViewById(R.id.setMode);
         playPause = (ImageButton) view.findViewById(R.id.play_pause);
         skip = (ImageButton) view.findViewById(R.id.skip);
         currentPoint = (TextView) view.findViewById(R.id.currentPoint);
@@ -140,10 +142,7 @@ public class HomeFragment extends Fragment {
         if(relative != null){
             relative.setBackgroundDrawable(dr);
         }
-
-        try{
-            songDuration = Integer.parseInt(StaticMethods.readFirstLine("songduration.txt",getActivity().getBaseContext()));
-        }catch(IOException e){}
+        songDuration = Integer.parseInt(settings.getString("songDuration","10"));
         sb.setMax(songDuration);
         String endString = millisecondsToTimeFormat(songDuration);
         endPoint.setText(endString);
@@ -152,10 +151,8 @@ public class HomeFragment extends Fragment {
 
             @Override
             public void onStartTrackingTouch(SeekBar seekBar) {
-                try {
-                    StaticMethods.write("seekbar.txt", "start", getActivity().getBaseContext());
-                } catch (IOException e) {
-                }
+                editor.putString("seekbar","start");
+                editor.commit();
             }
 
             @Override
@@ -167,10 +164,8 @@ public class HomeFragment extends Fragment {
 
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) {
-                try {
-                    StaticMethods.write("seekbar.txt", Integer.toString(progress), getActivity().getBaseContext());
-                } catch (IOException e) {
-                }
+                editor.putString("seekbar",Integer.toString(progress));
+                editor.commit();
             }
         });
 
@@ -186,11 +181,8 @@ public class HomeFragment extends Fragment {
         spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                //Toast.makeText(getActivity().getBaseContext(),"Item " + position + " selected", Toast.LENGTH_LONG).show();
-                try {
-                    StaticMethods.write("options.txt", Integer.toString(position), getActivity().getBaseContext());
-                } catch (IOException e) {
-                }
+                editor.putInt("options",position);
+                editor.commit();
                 if(position == 1){
                     createPlaylistDialog();
                 }
@@ -213,40 +205,29 @@ public class HomeFragment extends Fragment {
         playPause.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                String musicState = "";
-                try {
-                    musicState = StaticMethods.readFirstLine("musicState.txt", getActivity().getBaseContext());
-                } catch (IOException e) {
-                }
+                String musicState = settings.getString("musicState","");
                 if (musicState.equals("play")) {
-                    try {
-                        StaticMethods.write("musicState.txt", "pause", getActivity().getBaseContext());
-                    } catch (IOException e) {
-                    }
+                    editor.putString("musicState","pause");
                     playPause.setImageResource(R.mipmap.play);
                 } else if(musicState.equals("pause")){
-                    try {
-                        StaticMethods.write("musicState.txt", "play", getActivity().getBaseContext());
-                    } catch (IOException e) {
-                    }
+                    editor.putString("musicState","play");
                     playPause.setBackgroundResource(0);//clear imagebutton of previous image
                     playPause.setImageResource(R.mipmap.pause);
                     sendPlayPauseResult("play");//if headphones are not plugged in, play through speakers
                 }
+                editor.commit();
             }
         });
 
         skip.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                try {
-                    String state = StaticMethods.readFirstLine("musicState.txt",getActivity().getBaseContext());
-                    if(state.equals("pause")){
-                        playPause.setImageResource(R.mipmap.pause);
-                    }
-                    StaticMethods.write("musicState.txt", "skip song", getActivity().getBaseContext());
-                } catch (IOException e) {}
-
+                String state = settings.getString("musicState","");
+                if(state.equals("pause")){
+                    playPause.setImageResource(R.mipmap.pause);
+                }
+                editor.putString("musicState","skip song");
+                editor.commit();
             }
         });
 
@@ -254,60 +235,17 @@ public class HomeFragment extends Fragment {
             @Override
             public void onClick(View v) {
 
-                try {
-                    String state = StaticMethods.readFirstLine("musicState.txt",getActivity().getBaseContext());
-                    if(state.equals("pause")){
-                        playPause.setImageResource(R.mipmap.pause);
-                    }
-                    StaticMethods.write("musicState.txt", "prev song", getActivity().getBaseContext());
-                } catch (IOException e) {}
+                String state = settings.getString("musicState","");
+                if(state.equals("pause")){
+                    playPause.setImageResource(R.mipmap.pause);
+                }
+                editor.putString("musicState", "prev song");
+                editor.commit();
 
             }
 
         });
 
-        /*setMode.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                final Dialog dialog = new Dialog(getActivity());
-                dialog.setContentView(R.layout.set_mode);
-                dialog.setTitle("Choose mode");
-
-                ListView lv = (ListView) dialog.findViewById(R.id.listView);
-                ArrayAdapter<String> adapter = new ArrayAdapter<String>(getActivity().getBaseContext(),R.layout.example_row);
-                adapter.add("Shuffle");
-                ArrayList<String> playlists = StaticMethods.readFile("playlist_names.txt",getActivity().getBaseContext());
-                if(playlists != null && playlists.size() > 0){
-                    adapter.add("Playlist");
-                }
-                adapter.add("Disable");
-                lv.setAdapter(adapter);
-                lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-                    @Override
-                    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                        switch(position){
-                            case 0:
-                                setMode.setText("Shuffle");
-                                break;
-                            case 1:
-                                setMode.setText("Playlist");
-                                break;
-                            case 2:
-                                setMode.setText("Disabled");
-                        }
-                        try {
-                            StaticMethods.write("options.txt", Integer.toString(position), getActivity().getBaseContext());
-                        } catch (IOException e) {
-                        }
-                        dialog.dismiss();
-                        if(position == 1){
-                            createPlaylistDialog();
-                        }
-                    }
-                });
-                dialog.show();
-            }
-        });*/
         return view;
     }
 
@@ -327,9 +265,8 @@ public class HomeFragment extends Fragment {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 String playlistFileName = adapter.getItem(position)+".txt";
-                try{
-                    StaticMethods.write("setPlaylist.txt",playlistFileName,getActivity().getBaseContext());
-                }catch(IOException e){}
+                editor.putString("setPlaylist",playlistFileName);
+                editor.commit();
                 //setMode.setText(adapter.getItem(position).toString());
                 dialog.dismiss();
             }
@@ -343,15 +280,12 @@ public class HomeFragment extends Fragment {
             Uri path =  data.getData();
             String realPath = StaticMethods.getPathFromMediaUri(getActivity().getBaseContext(), path);
             String title = StaticMethods.getTitleFromUriString(realPath);
-            try {
-                StaticMethods.write("nextSong.txt", realPath, getActivity().getBaseContext());
-            } catch (IOException e) {}
+            editor.putString("nextSong",realPath);
             Toast.makeText(getActivity().getBaseContext(), title+" is next", Toast.LENGTH_LONG).show();
         }else{
-            try {
-                StaticMethods.write("nextSong.txt", "none", getActivity().getBaseContext());
-            } catch (IOException e) {}
+            editor.putString("nextSong","none");
         }
+        editor.commit();
     }
 
     @Override
@@ -370,9 +304,7 @@ public class HomeFragment extends Fragment {
             public void onReceive(Context context, Intent intent) {
                 songInfo = intent.getStringExtra(ListenForHeadphones.MESSAGE1);
                 changeArtwork();
-                try{
-                    songDuration = Integer.parseInt(StaticMethods.readFirstLine("songduration.txt",getActivity().getBaseContext()));
-                }catch(IOException e){}
+                songDuration = Integer.parseInt(settings.getString("songDuration","10"));
                 sb.setMax(songDuration);
                 String endString = millisecondsToTimeFormat(songDuration);
                 endPoint.setText(endString);
@@ -389,11 +321,7 @@ public class HomeFragment extends Fragment {
 
         changeArtwork();
         //set appropriate play/pause icon
-        String musicState = "";
-        try {
-            musicState = StaticMethods.readFirstLine("musicState.txt", getActivity().getBaseContext());
-        } catch (IOException e) {
-        }
+        String musicState = settings.getString("musicState","");
         if (musicState.equals("play")) {
             playPause.setImageResource(R.mipmap.pause);
         } else if(musicState.equals("pause")){
@@ -409,12 +337,8 @@ public class HomeFragment extends Fragment {
     }
 
     private void changeArtwork(){
-        String songPath = "";
-        try {
-            songPath = StaticMethods.readFirstLine("currentSongUri.txt", getActivity().getBaseContext());
-        } catch (IOException e) {
-        }
-        if (songPath == null || songPath.equals("")) {
+        String songPath = settings.getString("currentSongUri","");
+        if (songPath.equals("")) {
             b = BitmapFactory.decodeResource(getResources(), R.mipmap.unknown_album);
         } else {
             MediaMetadataRetriever mmr = new MediaMetadataRetriever();
@@ -463,24 +387,6 @@ public class HomeFragment extends Fragment {
         if(message != null)
             intent.putExtra(MESSAGE3, message);
         play_pause.sendBroadcast(intent);
-    }
-
-    public void checkFirstRun() {
-        boolean isFirstRun = getActivity().getSharedPreferences("FIRSTRUN", Activity.MODE_PRIVATE).getBoolean("isFirstRun", true);
-        if (isFirstRun){
-            //add dialog here
-            final Dialog dialog = new Dialog(getActivity());
-            dialog.setContentView(R.layout.first_time_dialog);
-            dialog.setTitle("First Time Setup");
-
-            dialog.show();
-
-            getActivity().getSharedPreferences("FIRSTRUN", Activity.MODE_PRIVATE)
-                    .edit()
-                    .putBoolean("isFirstRun", false)
-                    .apply();
-        }
-
     }
 
 }
