@@ -54,6 +54,8 @@ public class AlbumsListView extends Activity {
 
         done = (Button) findViewById(R.id.done);
 
+        done.setText("<");
+
         done.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {

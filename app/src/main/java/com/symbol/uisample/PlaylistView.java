@@ -9,6 +9,7 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.ListView;
 import android.widget.Toast;
 
@@ -19,8 +20,7 @@ public class PlaylistView extends Activity{
 
     private ListView mainListView;
     private Button addSong;
-    private Button deletePlaylist;
-    private Button done;
+    private ImageButton deletePlaylist;
 
     private ArrayAdapter<String> listAdapter;//displays song titles
     private StringBuilder sb = new StringBuilder();//used to write paths to file
@@ -49,8 +49,7 @@ public class PlaylistView extends Activity{
         playlistFileName = playlistName+".txt";
         mainListView = (ListView) findViewById( R.id.mainListView );
         addSong = (Button) findViewById(R.id.add_song);
-        deletePlaylist = (Button) findViewById(R.id.delete_playlist);
-        done = (Button) findViewById(R.id.set_playlist);
+        deletePlaylist = (ImageButton) findViewById(R.id.delete_playlist);
 
         populateListView();
 
@@ -84,19 +83,6 @@ public class PlaylistView extends Activity{
                 }
                 Intent i = new Intent(getBaseContext(), MainActivity.class);
                 startActivity(i);
-            }
-        });
-
-        done.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                //must have at least one song before "creating" playlist
-                if(songPaths == null || songPaths.size() == 0){
-                    Toast.makeText(getBaseContext(),"Playlists must have at least 1 song in them",Toast.LENGTH_LONG).show();
-                }else{
-                    Intent i = new Intent(getBaseContext(),MainActivity.class);
-                    startActivity(i);
-                }
             }
         });
 
@@ -147,7 +133,17 @@ public class PlaylistView extends Activity{
                 listAdapter.add(s2);
             }
         }
-        mainListView.setAdapter( listAdapter );
+        mainListView.setAdapter(listAdapter);
+    }
+
+    @Override
+    public void onBackPressed() {
+        if(songPaths == null || songPaths.size() == 0){
+            Toast.makeText(getBaseContext(),"Playlists must have at least 1 song in them",Toast.LENGTH_LONG).show();
+        }else{
+            Intent i = new Intent(getBaseContext(),MainActivity.class);
+            startActivity(i);
+        }
     }
 
 }

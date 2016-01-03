@@ -1,21 +1,37 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="vertical"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
-    android:background="#A9A9A9">
+    android:background="#000000">
 
     <Button
         style="?android:attr/buttonStyleSmall"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="+"
         android:id="@+id/add_playlist"
-        android:layout_gravity="right" />
+        android:text="+"
+        android:textColor="#FFFFFF"
+        android:textSize="30sp"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentRight="true"
+
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:background="@drawable/add_button"/>
 
     <ListView android:layout_width="fill_parent"
-        android:layout_height="fill_parent"
-        android:id="@+id/mainListView">
+        android:layout_height="wrap_content"
+        android:id="@+id/mainListView"
+        android:layout_weight="1"
+        android:background="#A9A9A9">
     </ListView>
 
-</LinearLayout>
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:text=""
+        android:id="@+id/textView"
+        android:layout_below="@+id/mainListView"
+        android:background="#000000"/>
+
+</RelativeLayout>

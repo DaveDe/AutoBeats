@@ -3,20 +3,23 @@ package com.symbol.uisample;
 import android.app.ListActivity;
 import android.content.Intent;
 import android.database.Cursor;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.provider.MediaStore;
+import android.text.style.BackgroundColorSpan;
 import android.util.SparseBooleanArray;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.ListView;
+import android.widget.RelativeLayout;
 import android.widget.SimpleCursorAdapter;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.List;
-
 //displays songs from selected album in a listview with checkboxes
 public class AlbumSongSelector extends ListActivity {
 
@@ -37,6 +40,7 @@ public class AlbumSongSelector extends ListActivity {
 
         done = (Button) findViewById(R.id.done);
         lv = this.getListView();
+
 
         String[] column = { MediaStore.Audio.Media.DATA,
                 MediaStore.Audio.Media._ID, MediaStore.Audio.Media.TITLE,
@@ -67,12 +71,14 @@ public class AlbumSongSelector extends ListActivity {
         this.setListAdapter(mAdapter);
         lv.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE);
 
+        done.setText("<");
+
         done.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
 
                 SparseBooleanArray sparseBooleanArray = lv.getCheckedItemPositions();//maps ints to booleans
-                for(int i = 0; i < lv.getCount(); i++) {
+                for (int i = 0; i < lv.getCount(); i++) {
                     if (sparseBooleanArray.get(i)) {
                         selectedSongs.add(songPaths.get(i));
                     }

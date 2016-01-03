@@ -1,19 +1,37 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="vertical" android:layout_width="fill_parent"
-    android:layout_height="fill_parent">
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:background="#000000">
+
 
     <ListView
         android:id="@android:id/android:list"
         android:layout_width="fill_parent"
-        android:layout_height="fill_parent"
-        android:layout_weight="1"/>
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:background="#A9A9A9"/>
 
     <Button
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Done"
+        style="?android:attr/buttonStyleSmall"
         android:id="@+id/done"
-        android:layout_gravity="center_horizontal"/>
+        android:text=""
+        android:textColor="#FFFFFF"
+        android:textSize="30sp"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentLeft="true"
 
-</LinearLayout>
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:background="@drawable/add_button"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:id="@+id/textView"
+        android:background="#000000"
+        android:layout_below="@android:id/list"/>
+
+</RelativeLayout>
