@@ -26,6 +26,20 @@
 
     <Button
         style="?android:attr/buttonStyleSmall"
+        android:id="@+id/back"
+        android:text=""
+        android:textColor="#FFFFFF"
+        android:textSize="30sp"
+        android:layout_alignParentBottom="true"
+        android:layout_centerInParent="true"
+
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:background="@drawable/add_button">
+    </Button>
+
+    <Button
+        style="?android:attr/buttonStyleSmall"
         android:id="@+id/add_song"
         android:text="+"
         android:textColor="#FFFFFF"

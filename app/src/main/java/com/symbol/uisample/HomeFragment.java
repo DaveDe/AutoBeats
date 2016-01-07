@@ -52,20 +52,20 @@ public class HomeFragment extends Fragment {
     private Display display;
     private Point point;
     private SeekBar sb;
-    private ImageButton nextSong;
     private ImageButton playPause;
     private ImageButton skip;
     private ImageButton prev;
     private TextView currentPoint;
     private TextView endPoint;
     private TextView songInfoText;
+    private TextView playlistInfo;
     private RelativeLayout rl;
     private Spinner spinner;
 
     private int width;
     private int height;
     private int songDuration = 0;
-    private String songInfo = "not found";
+    private String songInfo = "";
 
     private LocalBroadcastManager play_pause;
     private SharedPreferences settings;
@@ -111,7 +111,6 @@ public class HomeFragment extends Fragment {
 
         play_pause = LocalBroadcastManager.getInstance(getActivity().getBaseContext());
 
-
     }
 
     // Inflate the view for the fragment based on layout XML
@@ -120,12 +119,12 @@ public class HomeFragment extends Fragment {
                              Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_main, container, false);
         sb = (SeekBar) view.findViewById(R.id.seekBar);
-        nextSong = (ImageButton) view.findViewById(R.id.nextSong);
         playPause = (ImageButton) view.findViewById(R.id.play_pause);
         skip = (ImageButton) view.findViewById(R.id.skip);
         currentPoint = (TextView) view.findViewById(R.id.currentPoint);
         endPoint = (TextView) view.findViewById(R.id.endPoint);
         songInfoText = (TextView) view.findViewById(R.id.song_info);
+        playlistInfo = (TextView) view.findViewById(R.id.playlist_info);
         rl = (RelativeLayout) view.findViewById(R.id.relative2);
         prev = (ImageButton) view.findViewById(R.id.prev);
         spinner = (Spinner)view.findViewById(R.id.spinner);
@@ -183,22 +182,21 @@ public class HomeFragment extends Fragment {
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                 editor.putInt("options",position);
                 editor.commit();
+                ArrayList<String> playlists = StaticMethods.readFile("playlist_names.txt",getActivity().getBaseContext());
                 if(position == 1){
-                    createPlaylistDialog();
+                    if(playlists.size() == 0){
+                        Toast.makeText(getActivity(),"Swipe left to create playlist",Toast.LENGTH_SHORT).show();
+                    }else{
+                        createPlaylistDialog();
+                    }
+                }else{
+                    playlistInfo.setText("");
                 }
             }
 
             @Override
             public void onNothingSelected(AdapterView<?> parent) {
                 Toast.makeText(getActivity().getBaseContext(),"Nothing Selected", Toast.LENGTH_LONG).show();
-            }
-        });
-
-        nextSong.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent i = new Intent(Intent.ACTION_PICK, android.provider.MediaStore.Audio.Media.EXTERNAL_CONTENT_URI);
-                startActivityForResult(i, 1);
             }
         });
 
@@ -266,8 +264,9 @@ public class HomeFragment extends Fragment {
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 String playlistFileName = adapter.getItem(position)+".txt";
                 editor.putString("setPlaylist",playlistFileName);
+                editor.putInt("playlistSongIndex",0);
                 editor.commit();
-                //setMode.setText(adapter.getItem(position).toString());
+                playlistInfo.setText("Playlist: "+adapter.getItem(position).toString());
                 dialog.dismiss();
             }
         });

@@ -80,9 +80,8 @@ public class ListenForHeadphones extends Service {
             public void onReceive(Context context, Intent intent) {
                 String s = intent.getStringExtra(HomeFragment.MESSAGE3);
                 if(s.equals("play")&&(!headphones)&&(!isRunning)){
-                    new Thread()
-                    {
-                        public void run() {
+                    new Thread(){
+                        public void run(){
                             if(!isRunning){
                                 startMusic();
                             }
@@ -107,7 +106,7 @@ public class ListenForHeadphones extends Service {
         editor.putString("songDuration", "10");
         editor.putString("currentSongUri", "");
         editor.putString("speakerStatus", "no");
-        editor.putString("importStatus","no");
+        editor.putString("importStatus", "no");
         editor.commit();
         NotificationManager notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
         notificationManager.cancelAll();
@@ -291,7 +290,7 @@ public class ListenForHeadphones extends Service {
         }
         if(!nextSong.equals("none")){
             playSongHelper(nextSong);
-        }else {
+        }else{
             mode = settings.getInt("options",0);
             if (mode == 0) {
                 Random rand = new Random();
@@ -307,10 +306,16 @@ public class ListenForHeadphones extends Service {
                     isRunning = false;
                 }else {
                     ArrayList<String> playListSongs = StaticMethods.readFile(file, getBaseContext());
-                    Random rand = new Random();
-                    song = rand.nextInt(playListSongs.size());
-                    String songUri = playListSongs.get(song);
+                    int playlistSongIndex = settings.getInt("playlistSongIndex",0);
+                    String songUri = playListSongs.get(playlistSongIndex);
                     playSongHelper(songUri);
+                    if(playlistSongIndex < playListSongs.size() - 1) {
+                        playlistSongIndex++;
+                    }else{
+                        playlistSongIndex = 0;
+                    }
+                    editor.putInt("playlistSongIndex",playlistSongIndex);
+                    editor.commit();
                 }
             }
         }
@@ -391,9 +396,9 @@ public class ListenForHeadphones extends Service {
         contentView.setOnClickPendingIntent(R.id.play_pause, playPauseIntent);
         String temp = settings.getString("musicState","");
         if(temp.equals("pause")){
-            contentView.setImageViewResource(R.id.play_pause,R.mipmap.play);
+            contentView.setImageViewResource(R.id.play_pause,R.mipmap.n_play);
         }else{
-            contentView.setImageViewResource(R.id.play_pause,R.mipmap.pause);
+            contentView.setImageViewResource(R.id.play_pause,R.mipmap.n_pause);
         }
         contentView.setOnClickPendingIntent(R.id.skip,skipIntent);
         notification.contentView = contentView;

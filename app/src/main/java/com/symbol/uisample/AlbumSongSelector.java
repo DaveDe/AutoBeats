@@ -104,5 +104,9 @@ public class AlbumSongSelector extends ListActivity {
         //Toast.makeText(this, "Clicked row " + position, Toast.LENGTH_SHORT).show();
     }
 
+    //back does nothing
+    @Override
+    public void onBackPressed() {}
+
 
 }

@@ -10,7 +10,6 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ListView;
-import android.widget.Toast;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -101,5 +100,9 @@ public class AlbumsListView extends Activity {
             }
         }
     }
+
+    //back does nothing
+    @Override
+    public void onBackPressed() {}
 
 }

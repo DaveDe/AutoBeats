@@ -20,6 +20,7 @@ public class PlaylistView extends Activity{
 
     private ListView mainListView;
     private Button addSong;
+    private Button back;
     private ImageButton deletePlaylist;
 
     private ArrayAdapter<String> listAdapter;//displays song titles
@@ -49,6 +50,7 @@ public class PlaylistView extends Activity{
         playlistFileName = playlistName+".txt";
         mainListView = (ListView) findViewById( R.id.mainListView );
         addSong = (Button) findViewById(R.id.add_song);
+        back = (Button) findViewById(R.id.back);
         deletePlaylist = (ImageButton) findViewById(R.id.delete_playlist);
 
         populateListView();
@@ -73,11 +75,11 @@ public class PlaylistView extends Activity{
                     }
                     StaticMethods.write("playlist_names.txt", sbPlaylist.toString(), getBaseContext());
                     //if deleting current playlist, switch mode to shuffle
-                    String currentPlaylistFileName = settings.getString("setPlaylist","");
-                    if(playlistFileName.equals(currentPlaylistFileName)){
-                        editor.putInt("options",0);
+                    String currentPlaylistFileName = settings.getString("setPlaylist", "");
+                    if (playlistFileName.equals(currentPlaylistFileName)) {
+                        editor.putInt("options", 0);
                         editor.commit();
-                        Toast.makeText(getBaseContext(),"Shuffle mode is set", Toast.LENGTH_LONG).show();
+                        Toast.makeText(getBaseContext(), "Shuffle mode is set", Toast.LENGTH_LONG).show();
                     }
                 } catch (IOException e) {
                 }
@@ -92,6 +94,19 @@ public class PlaylistView extends Activity{
                 Intent i = new Intent(getBaseContext(),AlbumsListView.class);
                 i.putExtra("playlist_file_name",playlistFileName);
                 startActivity(i);
+            }
+        });
+
+        back.setText("<");
+        back.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if(songPaths == null || songPaths.size() == 0){
+                    Toast.makeText(getBaseContext(),"Playlists must have at least 1 song in them",Toast.LENGTH_LONG).show();
+                }else{
+                    Intent i = new Intent(getBaseContext(),MainActivity.class);
+                    startActivity(i);
+                }
             }
         });
 
@@ -136,14 +151,8 @@ public class PlaylistView extends Activity{
         mainListView.setAdapter(listAdapter);
     }
 
+    //back does nothing
     @Override
-    public void onBackPressed() {
-        if(songPaths == null || songPaths.size() == 0){
-            Toast.makeText(getBaseContext(),"Playlists must have at least 1 song in them",Toast.LENGTH_LONG).show();
-        }else{
-            Intent i = new Intent(getBaseContext(),MainActivity.class);
-            startActivity(i);
-        }
-    }
+    public void onBackPressed() {}
 
 }

@@ -75,4 +75,8 @@ public class MainActivity extends FragmentActivity {
 
     }
 
+    //back does nothing
+    @Override
+    public void onBackPressed() {}
+
 }

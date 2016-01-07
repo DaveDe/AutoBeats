@@ -5,7 +5,6 @@
     android:layout_height="fill_parent"
     android:background="#000000">
 
-
     <ListView
         android:id="@android:id/android:list"
         android:layout_width="fill_parent"

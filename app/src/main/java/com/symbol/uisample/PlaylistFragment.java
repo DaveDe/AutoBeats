@@ -145,69 +145,71 @@ public class PlaylistFragment extends Fragment{
         String[] proj = { "playlist_name","_id"};
         Uri playlistUri = Uri.parse("content://com.google.android.music.MusicContent/playlists");
         Cursor cursor = getActivity().getContentResolver().query(playlistUri, proj, null, null, null);
-
-        cursor.moveToFirst();
-        while (!cursor.isAfterLast()) {
-            playlistNames.add(cursor.getString(0));
-            playlistID.add(cursor.getString(1));
-            cursor.moveToNext();
-        }
-
-        for(int i = 0; i < playlistID.size(); i++){
-
-            //titles correspond to paths with same index
-            ArrayList<String> songTitle = new ArrayList<String>();
-            ArrayList<String> songPaths = new ArrayList<String>();
-
-            String[] proj2 = { MediaStore.Audio.Media.TITLE };
-            String playListRef = "content://com.google.android.music.MusicContent/playlists/" + playlistID.get(i) + "/members";
-            Uri songUri = Uri.parse(playListRef);
-            Cursor songCursor = getActivity().getContentResolver().query(songUri, proj2, null, null, null);
-
-            songCursor.moveToFirst();
-            while (!songCursor.isAfterLast()) {
-                songTitle.add(songCursor.getString(0));
-                songCursor.moveToNext();
+        if(cursor != null){
+            cursor.moveToFirst();
+            while (!cursor.isAfterLast()) {
+                playlistNames.add(cursor.getString(0));
+                playlistID.add(cursor.getString(1));
+                cursor.moveToNext();
             }
 
+            for(int i = 0; i < playlistID.size(); i++){
 
-            for(String s: songTitle){
-                songPaths.add(StaticMethods.getPathFromTitle(s, getActivity().getBaseContext()));
-            }
+                //titles correspond to paths with same index
+                ArrayList<String> songTitle = new ArrayList<String>();
+                ArrayList<String> songPaths = new ArrayList<String>();
 
-            //update playlist_names.txt (make sure google play playlists are first)
-            StringBuilder sb = new StringBuilder();
-            for(String s: playlistNames){
-                sb.append(s+"\n");
-            }
+                String[] proj2 = { MediaStore.Audio.Media.TITLE };
+                String playListRef = "content://com.google.android.music.MusicContent/playlists/" + playlistID.get(i) + "/members";
+                Uri songUri = Uri.parse(playListRef);
+                Cursor songCursor = getActivity().getContentResolver().query(songUri, proj2, null, null, null);
 
-            ArrayList<String> temp = StaticMethods.readFile("playlist_names.txt",getActivity().getBaseContext());
-
-            //dont add the same playlist twice (google play playlist is already in playlist_names.txt)
-            for(String s: temp){
-                boolean add = true;
-                for(String s2: playlistNames){
-                    if(s.equals(s2)){
-                        add = false;
-                    }
+                songCursor.moveToFirst();
+                while (!songCursor.isAfterLast()) {
+                    songTitle.add(songCursor.getString(0));
+                    songCursor.moveToNext();
                 }
-                if(add){
+
+
+                for(String s: songTitle){
+                    songPaths.add(StaticMethods.getPathFromTitle(s, getActivity().getBaseContext()));
+                }
+
+                //update playlist_names.txt (make sure google play playlists are first)
+                StringBuilder sb = new StringBuilder();
+                for(String s: playlistNames){
                     sb.append(s+"\n");
                 }
-            }
-            try{
-                //StaticMethods.write("playlist_names.txt","",getActivity().getBaseContext());
-                StaticMethods.write("playlist_names.txt",sb.toString(),getActivity().getBaseContext());
-            }catch(IOException e){}
 
-            //create new file for each playlist found, populate with song paths
-            StringBuilder sb2 = new StringBuilder();
-            for(String s: songPaths){
-                sb2.append(s+"\n");
+                ArrayList<String> temp = StaticMethods.readFile("playlist_names.txt",getActivity().getBaseContext());
+
+                //dont add the same playlist twice (google play playlist is already in playlist_names.txt)
+                for(String s: temp){
+                    boolean add = true;
+                    for(String s2: playlistNames){
+                        if(s.equals(s2)){
+                            add = false;
+                        }
+                    }
+                    if(add){
+                        sb.append(s+"\n");
+                    }
+                }
+                try{
+                    //StaticMethods.write("playlist_names.txt","",getActivity().getBaseContext());
+                    StaticMethods.write("playlist_names.txt",sb.toString(),getActivity().getBaseContext());
+                }catch(IOException e){}
+
+                //create new file for each playlist found, populate with song paths
+                StringBuilder sb2 = new StringBuilder();
+                for(String s: songPaths){
+                    sb2.append(s+"\n");
+                }
+                try{
+                    StaticMethods.write(playlistNames.get(i)+".txt",sb2.toString(),getActivity().getBaseContext());
+                }catch(IOException e){}
+
             }
-            try{
-                StaticMethods.write(playlistNames.get(i)+".txt",sb2.toString(),getActivity().getBaseContext());
-            }catch(IOException e){}
 
         }
 
