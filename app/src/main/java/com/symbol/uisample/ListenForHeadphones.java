@@ -14,11 +14,9 @@ import android.content.SharedPreferences;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.os.AsyncTask;
+import android.os.Handler;
 import android.os.IBinder;
 import android.support.v4.content.LocalBroadcastManager;
-import android.support.v7.app.NotificationCompat;
-import android.util.Log;
-import android.widget.ImageButton;
 import android.widget.RemoteViews;
 import android.widget.Toast;
 
@@ -46,6 +44,7 @@ public class ListenForHeadphones extends Service {
     private boolean headphones = false;
     private String seekBarProgress;
     private long elapsedTime;
+    private boolean noMusic;
 
     private LocalBroadcastManager songFinished;
     private LocalBroadcastManager seekBarUpdate;
@@ -112,6 +111,7 @@ public class ListenForHeadphones extends Service {
         notificationManager.cancelAll();
         LocalBroadcastManager.getInstance(this).registerReceiver((playPauseReceiver), new IntentFilter(HomeFragment.RESULT3));
         songPaths = StaticMethods.getSongPath(getBaseContext());
+        noMusic = false;
 
         return START_STICKY;
     }
@@ -164,6 +164,9 @@ public class ListenForHeadphones extends Service {
             //keep playing songs until headphones are unplugged
             while(true){
 
+                if(noMusic){
+                    break;
+                }
                 length = mp.getCurrentPosition();
                 if(!isRunning){
                     mp.pause();
@@ -264,63 +267,71 @@ public class ListenForHeadphones extends Service {
 
     private void playSong(){
 
-        String state = settings.getString("musicState","pause");
-        int song = 0;
-        String nextSong = getNextSong();
-        if(state.equals("prev song")){
-            String songUri = "";
-            try{
-                songUri = StaticMethods.readFirstLine("songLog.txt",getBaseContext());
-
-                if(songUri == null || songUri.equals("")){
-                }else{
-                    playSongHelper(songUri);
-                }
-                //remove songUri from songLog.txt
-                ArrayList<String> songs = StaticMethods.readFile("songLog.txt",getBaseContext());
-                StringBuilder sb = new StringBuilder();
-                //skip first song (list decreases in size by 1)
-                for(int i = 1; i < songs.size(); i++){
-                    sb.append(songs.get(i) + "\n");
-                }
-                StaticMethods.write("songLog.txt", sb.toString(), getBaseContext());
-
-            }catch(IOException e){}
-            return;
-        }
-        if(!nextSong.equals("none")){
-            playSongHelper(nextSong);
+        if(songPaths.size() == 0){
+            noMusic = true;
+            ToastThread t = new ToastThread();
+            t.execute();
         }else{
-            mode = settings.getInt("options",0);
-            if (mode == 0) {
-                Random rand = new Random();
-                song = rand.nextInt(songPaths.size());
-                String songUri = songPaths.get(song);
-                playSongHelper(songUri);
-            }
-            if (mode == 1) {
-                String file = settings.getString("setPlaylist","");
-                if(file.equals("")){
-                    Toast.makeText(getBaseContext(),"Please set Playlist",Toast.LENGTH_LONG).show();//POSSIBLE BUG IF PLAYLIST IS NOT SET
-                    mp = new MediaPlayer();
-                    isRunning = false;
-                }else {
-                    ArrayList<String> playListSongs = StaticMethods.readFile(file, getBaseContext());
-                    int playlistSongIndex = settings.getInt("playlistSongIndex",0);
-                    String songUri = playListSongs.get(playlistSongIndex);
-                    playSongHelper(songUri);
-                    if(playlistSongIndex < playListSongs.size() - 1) {
-                        playlistSongIndex++;
+            noMusic = false;
+            String state = settings.getString("musicState","pause");
+            int song = 0;
+            String nextSong = getNextSong();
+            if(state.equals("prev song")){
+                String songUri = "";
+                try{
+                    songUri = StaticMethods.readFirstLine("songLog.txt",getBaseContext());
+
+                    if(songUri == null || songUri.equals("")){
                     }else{
-                        playlistSongIndex = 0;
+                        playSongHelper(songUri);
                     }
-                    editor.putInt("playlistSongIndex",playlistSongIndex);
-                    editor.commit();
+                    //remove songUri from songLog.txt
+                    ArrayList<String> songs = StaticMethods.readFile("songLog.txt",getBaseContext());
+                    StringBuilder sb = new StringBuilder();
+                    //skip first song (list decreases in size by 1)
+                    for(int i = 1; i < songs.size(); i++){
+                        sb.append(songs.get(i) + "\n");
+                    }
+                    StaticMethods.write("songLog.txt", sb.toString(), getBaseContext());
+
+                }catch(IOException e){}
+                return;
+            }
+            if(!nextSong.equals("none")){
+                playSongHelper(nextSong);
+            }else{
+                mode = settings.getInt("options",0);
+                if (mode == 0) {
+                    Random rand = new Random();
+                    song = rand.nextInt(songPaths.size());
+                    String songUri = songPaths.get(song);
+                    playSongHelper(songUri);
+                }
+                if (mode == 1) {
+                    String file = settings.getString("setPlaylist","");
+                    if(file.equals("")){
+                        Toast.makeText(getBaseContext(),"Please set Playlist",Toast.LENGTH_LONG).show();//POSSIBLE BUG IF PLAYLIST IS NOT SET
+                        mp = new MediaPlayer();
+                        isRunning = false;
+                    }else {
+                        ArrayList<String> playListSongs = StaticMethods.readFile(file, getBaseContext());
+                        int playlistSongIndex = settings.getInt("playlistSongIndex",0);
+                        String songUri = playListSongs.get(playlistSongIndex);
+                        playSongHelper(songUri);
+                        if(playlistSongIndex < playListSongs.size() - 1) {
+                            playlistSongIndex++;
+                        }else{
+                            playlistSongIndex = 0;
+                        }
+                        editor.putInt("playlistSongIndex",playlistSongIndex);
+                        editor.commit();
+                    }
                 }
             }
+
+            makeNotification(notificationTitle, notificationContent);
         }
 
-        makeNotification(notificationTitle, notificationContent);
 
     }
 
@@ -435,6 +446,29 @@ public class ListenForHeadphones extends Service {
         if(message != null)
             intent.putExtra(MESSAGE2, message);
         seekBarUpdate.sendBroadcast(intent);
+    }
+
+    class ToastThread extends AsyncTask<Void,Void,Void> {
+
+        protected Void doInBackground(Void... v) {
+            Handler handler =  new Handler(getBaseContext().getMainLooper());
+            handler.post( new Runnable(){
+                public void run(){
+                    Toast.makeText(getBaseContext(), "Cant find any music on device",Toast.LENGTH_LONG).show();
+                    return;
+                }
+            });
+            return null;
+        }
+
+        protected void onProgressUpdate(Void... v) {
+
+        }
+
+        protected void onPostExecute(Void... v) {
+
+        }
+
     }
 
     @Override

@@ -15,15 +15,11 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.Toast;
 
 import java.io.IOException;
-import java.net.URI;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
 
 public class PlaylistFragment extends Fragment{
 
@@ -111,8 +107,6 @@ public class PlaylistFragment extends Fragment{
                                 Toast.makeText(getActivity().getBaseContext(),"Can't have duplicate playlist names", Toast.LENGTH_LONG).show();
                                 duplicate = true;
                                 dialog.dismiss();
-                                //Intent i = new Intent(getActivity().getBaseContext(),MainActivity.class);
-                                //startActivity(i);
                             }
                         }
                         if(!duplicate){

@@ -5,9 +5,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.view.KeyEvent;
-import android.widget.Toast;
-
-import java.io.IOException;
 
 public class HeadphoneButtonListener extends BroadcastReceiver {
 
@@ -30,14 +27,12 @@ public class HeadphoneButtonListener extends BroadcastReceiver {
             if (((event.getKeyCode() == KeyEvent.KEYCODE_HEADSETHOOK) ||
                     (event.getKeyCode() == KeyEvent.KEYCODE_MEDIA_PAUSE)||
                     (event.getKeyCode() == KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE))&& (event.getAction() == KeyEvent.ACTION_DOWN)) {
-                //SharedPreferences settings = context.getSharedPreferences("name", 0);
                 long last = settings.getLong("last", 0);
                 long delta = System.currentTimeMillis() - last;
                 if (delta < DOUBLE_CLICK_DELAY) {
                     doubleClick = true;
                     doubleClick();
                 }
-                //SharedPreferences.Editor editor = settings.edit();
                 editor.putLong("last", System.currentTimeMillis());
                 editor.commit();
 

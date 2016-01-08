@@ -45,12 +45,13 @@
             android:layout_below="@+id/seekBar"
             android:layout_alignParentLeft="true"
             android:layout_alignParentStart="true"
-            android:layout_marginLeft="295dp" />
+            android:paddingLeft="@dimen/endTimePadding" />
 
         <ImageButton
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:id="@+id/play_pause"
+            android:background="@mipmap/nothing"
             android:layout_below="@+id/currentPoint"
             android:layout_centerHorizontal="true" />
 
@@ -59,8 +60,9 @@
             android:layout_height="wrap_content"
             android:background="@mipmap/skip"
             android:id="@+id/skip"
-            android:layout_below="@+id/currentPoint"
-            android:layout_alignLeft="@+id/endPoint" />
+            android:layout_below="@+id/endPoint"
+            android:layout_alignRight="@+id/endPoint"
+            android:layout_marginTop="@dimen/prevSkipPadding"/>
 
         <ImageButton
             android:layout_width="wrap_content"
@@ -69,7 +71,7 @@
             android:id="@+id/prev"
             android:layout_below="@+id/currentPoint"
             android:layout_alignRight="@+id/currentPoint"
-            android:layout_alignEnd="@+id/currentPoint" />
+            android:layout_marginTop="@dimen/prevSkipPadding"/>
 
         <Spinner
             android:id="@+id/spinner"
@@ -83,8 +85,7 @@
             android:layout_height="wrap_content"
             android:id="@+id/playlist_info"
             android:layout_below="@+id/seekBar"
-            android:layout_centerInParent="true"
-            android:text="HEYuigyguigiug"/>
+            android:layout_centerInParent="true" />
 
     </RelativeLayout>
 

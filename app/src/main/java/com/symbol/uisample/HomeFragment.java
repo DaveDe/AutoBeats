@@ -18,18 +18,13 @@ import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.content.LocalBroadcastManager;
-import android.support.v7.widget.Toolbar;
-import android.util.Log;
 import android.view.Display;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
-import android.widget.Button;
 import android.widget.ImageButton;
-import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.RelativeLayout;
 import android.widget.SeekBar;
@@ -37,7 +32,6 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -129,9 +123,9 @@ public class HomeFragment extends Fragment {
         prev = (ImageButton) view.findViewById(R.id.prev);
         spinner = (Spinner)view.findViewById(R.id.spinner);
 
-        rl.getBackground().setAlpha(200);//out of 255(255 is opaque)
         //initialize playPause icon
         playPause.setImageResource(R.mipmap.play);
+        rl.getBackground().setAlpha(200);//out of 255(255 is opaque)
         //initialize art
         b = BitmapFactory.decodeResource(getResources(), R.mipmap.unknown_album);
         Bitmap mb = StaticMethods.convertToMutable(b);
@@ -180,23 +174,23 @@ public class HomeFragment extends Fragment {
         spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                editor.putInt("options",position);
+                editor.putInt("options", position);
                 editor.commit();
-                ArrayList<String> playlists = StaticMethods.readFile("playlist_names.txt",getActivity().getBaseContext());
-                if(position == 1){
-                    if(playlists.size() == 0){
-                        Toast.makeText(getActivity(),"Swipe left to create playlist",Toast.LENGTH_SHORT).show();
-                    }else{
+                ArrayList<String> playlists = StaticMethods.readFile("playlist_names.txt", getActivity().getBaseContext());
+                if (position == 1) {
+                    if (playlists.size() == 0) {
+                        Toast.makeText(getActivity(), "Swipe left to create playlist", Toast.LENGTH_SHORT).show();
+                    } else {
                         createPlaylistDialog();
                     }
-                }else{
+                } else {
                     playlistInfo.setText("");
                 }
             }
 
             @Override
             public void onNothingSelected(AdapterView<?> parent) {
-                Toast.makeText(getActivity().getBaseContext(),"Nothing Selected", Toast.LENGTH_LONG).show();
+                Toast.makeText(getActivity().getBaseContext(), "Nothing Selected", Toast.LENGTH_LONG).show();
             }
         });
 
@@ -208,8 +202,7 @@ public class HomeFragment extends Fragment {
                     editor.putString("musicState","pause");
                     playPause.setImageResource(R.mipmap.play);
                 } else if(musicState.equals("pause")){
-                    editor.putString("musicState","play");
-                    playPause.setBackgroundResource(0);//clear imagebutton of previous image
+                    editor.putString("musicState", "play");
                     playPause.setImageResource(R.mipmap.pause);
                     sendPlayPauseResult("play");//if headphones are not plugged in, play through speakers
                 }
