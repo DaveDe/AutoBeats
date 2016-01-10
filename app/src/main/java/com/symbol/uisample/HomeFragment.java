@@ -336,7 +336,12 @@ public class HomeFragment extends Fragment {
             MediaMetadataRetriever mmr = new MediaMetadataRetriever();
             if (Build.VERSION.SDK_INT >= 14) {
                 if(songPath != null && !songPath.equals("")){
-                    mmr.setDataSource(songPath, new HashMap<String, String>());
+                    System.out.println("SongPath: " + songPath);
+                    try{
+                        mmr.setDataSource(songPath, new HashMap<String, String>());
+                    }catch (Exception e){
+                        Toast.makeText(getActivity(),"Failed to load artwork",Toast.LENGTH_SHORT).show();
+                    }
                 }
             } else {
                 mmr.setDataSource(songPath);
