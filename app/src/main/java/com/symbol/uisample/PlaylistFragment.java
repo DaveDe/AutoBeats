@@ -1,13 +1,18 @@
 package com.symbol.uisample;
 
+import android.Manifest;
+import android.app.Activity;
 import android.app.Dialog;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
+import android.support.v4.content.ContextCompat;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -47,6 +52,7 @@ public class PlaylistFragment extends Fragment{
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
+
         View view = inflater.inflate(R.layout.fragment_playlist, container, false);
 
         mainListView = (ListView) view.findViewById( R.id.mainListView );
@@ -156,12 +162,16 @@ public class PlaylistFragment extends Fragment{
                 String[] proj2 = { MediaStore.Audio.Media.TITLE };
                 String playListRef = "content://com.google.android.music.MusicContent/playlists/" + playlistID.get(i) + "/members";
                 Uri songUri = Uri.parse(playListRef);
-                Cursor songCursor = getActivity().getContentResolver().query(songUri, proj2, null, null, null);
 
-                songCursor.moveToFirst();
-                while (!songCursor.isAfterLast()) {
-                    songTitle.add(songCursor.getString(0));
-                    songCursor.moveToNext();
+                try{
+                    Cursor songCursor = getActivity().getContentResolver().query(songUri, proj2, null, null, null);
+                    songCursor.moveToFirst();
+                    while (!songCursor.isAfterLast()) {
+                        songTitle.add(songCursor.getString(0));
+                        songCursor.moveToNext();
+                    }
+                }catch (SecurityException e){
+                    System.out.println(e);
                 }
 
 
